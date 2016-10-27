@@ -13,12 +13,12 @@ trait BinaryOperator extends Expr {
 
   def build(op1: Expr, op2: Expr): BinaryOperator
 
-  lazy val optimized = {
+  lazy val optimized: List[Expr] = {
     // quiet : Dragons are living here
     val optOp2 = op2.optimized
 
-    val optimzedBinaries : Seq[BinaryOperator] = op1.optimized.flatMap(o1 => optOp2.map(o2 => this.build(o1,o2)))
-    BinaryOperator.rules.flatMap(optimzedBinaries.collect(_)).sorted.distinct
+    val optimizedBinaries : Seq[BinaryOperator] = op1.optimized.flatMap(o1 => optOp2.map(o2 => this.build(o1,o2)))
+    BinaryOperator.rules.flatMap(optimizedBinaries.collect(_)).sorted.distinct
  }
 
 }
@@ -63,10 +63,14 @@ object BinaryOperator {
     rule({ case Minus(Integer(a), Integer(b)) => Integer(a - b) })
     rule({ case Prod(Integer(a), Integer(b)) => Integer(a * b) })
     rule({ case Prod(a, ONE) => a })
+    rule({ case Prod(ONE, a) => a })
     rule({ case Divide(a, ONE) => a })
     rule({ case Prod(a, ZERO) => ZERO })
     rule({ case Prod(ZERO, a) => ZERO })
+    rule({ case Plus(Plus(a: Expr, b: Expr), c: Expr) => a + (b + c) })
+    rule({ case Plus(Plus(a: Expr, b: Expr), c: Expr) => b + (a + c) })
     rule({ case Plus(a: Expr, Plus(b: Expr, c: Expr)) => (a + b) + c })
+    rule({ case Plus(a: Expr, Plus(b: Expr, c: Expr)) => (a + c) + b })
     rule({ case Prod(Exp(a),Exp(b)) => exp(a+b) })
 
 
@@ -83,10 +87,27 @@ case class Plus(op1: Expr, op2: Expr) extends BinaryOperator {
   def derivative(d: Expr) = op1.derivative(d) + op2.derivative(d)
 
   override def equals(that: Any): Boolean = that match {
-      case Plus(a,b) => (op1 == a && op2 == b ) || (op1 == b && op2 == a )
+      case a: Plus => Plus.equals(this,a)
       case _ => false
     }
   val cost = 4 + op1.cost +op2.cost
+}
+
+object Plus {
+
+  def equals(a: Plus , b:Plus ) :Boolean = Expr.equals(allPlus(a,Nil),allPlus(b,Nil))
+
+  def allPlus(p : Plus, l:List[Expr] ): List[Expr] = {
+    p match {
+      case Plus(a:Plus,b:Plus) => allPlus(a,allPlus(b,l))
+      case Plus(a:Plus,b) => b::allPlus(a,l)
+      case Plus(a,b:Plus) => a::allPlus(b,l)
+      case Plus(a,b) => a::b::l
+      case _ => ???
+
+    }
+
+  }
 }
 
 case class Minus(op1: Expr, op2: Expr) extends BinaryOperator {

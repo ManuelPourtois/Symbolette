@@ -1,19 +1,22 @@
-package com.pourtois.symbolette.expr
+package com.pourtois.symbolette.expr.test
 
-import Expr._
-
+import com.pourtois.symbolette.expr.Expr._
+import com.pourtois.symbolette.expr.{Expr, Integer}
 import org.scalatest._
+import com.pourtois.symbolette.expr.Symbol
 
 /**
   * Created by manu on 24.10.16.
   */
 class TestUnary extends FunSuite {
 
+  val y = symbol("y")
+  val z = symbol("z")
+  val r = symbol("r")
+  val x = symbol("x")
+
   test("Soon your pocahontas compilable test name here") {
 
-    val z = symbol("z")
-    val r = symbol("r")
-    val x = symbol("x", r :: z :: Nil)
 
     val diff = -(-x)
     val opti = diff.optimized
@@ -69,6 +72,46 @@ class TestUnary extends FunSuite {
   def printOpti(o: Seq[Expr]) = {
     println("Optimized")
     o.foreach(println(_))
+  }
+
+  test("another non-refactorable name") {
+    val l1 = ONE::ZERO::(ONE/TWO)::PI::Nil
+    val l2 = ONE::(ONE/Integer(2))::ZERO::PI::Nil
+    val l3 = ONE::ZERO::TWO::Nil
+    val l4 = ONE::ZERO::TWO::TWO::Nil
+
+
+    val t = Expr.equals(l1,l2)
+    assert (Expr.equals(l1,l2))
+    assert (!Expr.equals(l3,l4))
+  }
+
+  test("") {
+    assert( ((x+y)+z) == (x+(y+z)))
+    assert( ((x+y)+z) == (x+(z+y)))
+    assert( ((x+y)+(z+z)) == ((x+z)+(y+z)))
+
+    val e = (x+y+x+y+x+y+x+y)
+
+    //printOpti(e.optimized)
+//    printOpti(e.optimized.flatMap(_.optimized).distinct)
+    assert((x+x+x+x+x+x+x+x).best == Integer(8)*x)
+  }
+  test("derivate") {
+
+    assert(x.derivative(x) == Expr.ONE)
+    assert(x.derivative(y) == Expr.ZERO)
+
+    assert(exp(x).derivative(x).best == exp(x))
+    assert(exp(x*x).derivative(x).best == Expr.TWO*x*exp(x*x))
+
+    val phi = symbol("phi",x::y::Nil)
+    val phid: Symbol  = (phi.derivative(x)).asInstanceOf[Symbol]
+
+    System.err.println("Phi ' "+phid)
+    assert(exp(phi).derivative(x).best == phid*exp(phi))
+
+
   }
 
 }
