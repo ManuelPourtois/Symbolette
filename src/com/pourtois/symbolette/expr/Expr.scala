@@ -93,6 +93,8 @@ class Coordinates(val symbols : List[Symbol])  {
   def tensor3 = ???
 }
 
+
+
 trait Vector {
   def apply(indice: Symbol) :Expr
 }
