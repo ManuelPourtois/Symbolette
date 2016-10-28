@@ -85,54 +85,16 @@ object Expr {
     l1s.equals(l2s)
   }
 }
+trait Operator {
+}
+case class Derivative(of:Expr, by : Expr) extends Operator {
 
+  //val optimOf = of.optimized
 
-case class Symbol(name: String, depend: List[Symbol], derivate: List[Symbol]) extends Expr {
+  lazy val optimized = of.derivative(by).optimized
 
-  override def derivative(d: Expr): Expr = if (d == this) Expr.ONE
-  else {
-    d match {
-      case s: Symbol => if (depend.contains(d)) Symbol(name, depend, s :: derivate) else Expr.ZERO
-      case _ => Expr.ZERO
-    }
-  }
-
-
-  override val optimized: List[Expr] = this :: Nil
-
-  override def toString: String = {
-    val derivation = derivate.mkString("'")
-
-    derivate.foldRight(name)((s,b) => b+","+s.name)+(depend match {
-      case Nil => ""
-      case _ =>  '(' + depend.map(_.name).mkString(",") + ')'
-    })
-  }
-
-  val cost = 3
 }
 
-class Coordinates(val symbols: List[Symbol]) {
-
-  def vector: Vector = ???
-
-  def tensor2 = ???
-
-  def tensor3 = ???
-}
-
-
-trait Vector {
-  def apply(indice: Symbol): Expr
-}
-
-trait Tensor2 {
-  def apply(i1: Symbol, i2: Symbol): Expr
-}
-
-trait Tensor3 {
-  def apply(i1: Symbol, i2: Symbol, i3: Symbol): Expr
-}
 
 case class Integer(i: Int) extends Constant {
   val cost = if (i == 0) 0 else 1
