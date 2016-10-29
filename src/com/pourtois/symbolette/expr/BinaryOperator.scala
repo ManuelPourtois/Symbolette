@@ -20,6 +20,7 @@ trait BinaryOperator extends Expr {
     val optimizedBinaries : Seq[BinaryOperator] = op1.optimized.flatMap(o1 => optOp2.map(o2 => this.build(o1,o2)))
     BinaryOperator.rules.flatMap(optimizedBinaries.collect(_)).sorted.distinct
  }
+  val valueHash: Long = op1.valueHash+31*op2.valueHash
 
 }
 
@@ -114,7 +115,7 @@ case class Minus(op1: Expr, op2: Expr) extends BinaryOperator {
   def build(op1: Expr, op2: Expr) = Minus(op1, op2)
 
   def derivative(d: Expr) = op1.derivative(d) - op2.derivative(d)
-  val cost = 4 + op1.cost +op2.cost
+  val cost = 5 + op1.cost +op2.cost
 
 }
 
@@ -122,7 +123,7 @@ case class Prod(op1: Expr, op2: Expr) extends BinaryOperator {
   def build(op1: Expr, op2: Expr) = Prod(op1, op2)
 
   def derivative(d: Expr) = (op1.derivative(d)) * op2 + op1 * (op2.derivative(d))
-  val cost = 5 + op1.cost +op2.cost
+  val cost = 6 + op1.cost +op2.cost
 
   override def equals(that: Any): Boolean = that match {
     case Prod(a,b) => {
@@ -138,6 +139,6 @@ case class Divide(op1: Expr, op2: Expr) extends BinaryOperator {
   def build(op1: Expr, op2: Expr) = Divide(op1, op2)
 
   def derivative(d: Expr) = (op1.derivative(d) * op2 - op1 * op2.derivative(d)) / (op2 * op2)
-  val cost = 6 + op1.cost +op2.cost
+  val cost = 7 + op1.cost +op2.cost
 
 }

@@ -23,6 +23,7 @@ trait Expr extends Ordered[Expr] {
 
   val optimized: Seq[Expr]
   val cost: Int
+  val valueHash :Long
 
   lazy val best = stableBest(optimized.head, 10)
 
@@ -64,7 +65,7 @@ trait Transcendant extends Constant {
 
 
 object Expr {
-  def symbol(name: String, depend: List[Symbol] = Nil, derivate: List[Symbol] = Nil) = new Symbol(name, depend, derivate)
+  def symbol(name: String, depend: List[Symbol] = Nil, derivate: List[Symbol] = Nil) =  Symbol(name, depend, derivate)
 
   val ONE = Integer(1)
   val TWO = Integer(2)
@@ -84,8 +85,15 @@ object Expr {
     val l2s = l2.sorted
     l1s.equals(l2s)
   }
+
+  implicit def tupleToIndiceDef(tuple: (Indice,Indice)) = IndiceDef(tuple._1,Some(tuple._2))
+  implicit def indiceToIndiceDef(indice:Indice) = IndiceDef(indice,None)
+
+  implicit def indiceToExpr(indice:Indice) = indice.symbol
+
+
 }
-trait Operator {
+trait Operator extends Expr {
 }
 case class Derivative(of:Expr, by : Expr) extends Operator {
 
@@ -93,6 +101,9 @@ case class Derivative(of:Expr, by : Expr) extends Operator {
 
   lazy val optimized = of.derivative(by).optimized
 
+  override def derivative(d: Expr): Expr = of.derivative(by).derivative(d)
+
+  override val cost: Int = 6
 }
 
 
